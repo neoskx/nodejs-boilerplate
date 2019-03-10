@@ -1,0 +1,38 @@
+{
+  "name": "nodejs-boilerplate",
+  "description": "A nodejs boilerplate help myself to create a nodejs service faster. ",
+  "keywords": [
+    "nodejs",
+    "boilerplate"
+  ],
+  "website": "https://github.com/shaoke",
+  "repository": "https://github.com/shaoke/nodejs-boilerplate.git",
+  "env": {
+    "API_KEY": {
+      "description": "API Key for restful api validation",
+      "value": "5b0e37dd-2bc8-42b4-8e18-d9b8faf19c99"
+    },
+    "MONGODB_URL": {
+      "description": "Mongodb URL",
+      "value": "ds129045.mlab.com:29045"
+    },
+    "MONGODB_NAME": {
+      "description": "MongoDB Name",
+      "value": "house-data-spider"
+    },
+    "MONGODB_USERNAME": {
+      "description": "MongoDB User Name",
+      "value": "admin"
+    },
+    "MONGODB_PASSWORD": {
+      "description": "MongoDB User's Password",
+      "value": "123456789"
+    }
+  },
+  "success_url": "/",
+  "buildpacks": [
+    {
+      "url": "http://github.com/heroku/heroku-buildpack-nodejs.git"
+    }
+  ]
+}
