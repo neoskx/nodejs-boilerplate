@@ -18,7 +18,7 @@
     },
     "MONGODB_NAME": {
       "description": "MongoDB Name",
-      "value": "house-data-spider"
+      "value": "nodejs-boilerplate"
     },
     "MONGODB_USERNAME": {
       "description": "MongoDB User Name",
