@@ -2,7 +2,7 @@
  * Created by Shaoke Xu on 5/5/18.
  */
 const express = require('express');
-const logger = require('./util/logger')(__filename);
+const logger = require('./util/logger');
 const packageJson = require('../package.json');
 
 // routers

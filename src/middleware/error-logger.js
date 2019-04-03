@@ -1,5 +1,5 @@
 const _ = require('lodash');
-const logger = require('../util/logger')(__filename);
+const logger = require('../util/logger');
 
 const SLICE_THRESHOLD = 1000;
 

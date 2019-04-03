@@ -6,14 +6,15 @@ const bodyParser = require('body-parser');
 const compression = require('compression');
 const morgan = require('morgan');
 
-const logger = require('./util/logger')(__filename);
+const logger = require('./util/logger');
 const errorResponder = require('./middleware/error-responder');
 const errorLogger = require('./middleware/error-logger');
 const createRouters = require('./routers');
 const config = require('./config');
 const security = require('./util/security');
+const checkMigration = require('./migration');
 
-function createApp(){
+function createApp() {
   const app = express();
   logger.info("create app successful!");
 
@@ -27,22 +28,36 @@ function createApp(){
   }
 
   // Limit to 10mb if HTML has e.g. inline images
-  app.use(bodyParser.text({ limit: '4mb', type: 'text/html' }));
-  app.use(bodyParser.json({ limit: '10mb' }));
+  app.use(bodyParser.text({
+    limit: '4mb',
+    type: 'text/html'
+  }));
+  app.use(bodyParser.json({
+    limit: '10mb'
+  }));
 
   app.use(compression({
     // Compress everything over 10 bytes
     threshold: 10,
   }));
 
-  app.use((req, res, next)=>{
-    if(security.verifyAPIKey(req, res)){
+  app.use((req, res, next) => {
+    if (security.verifyAPIKey(req, res)) {
       next();
-    }else{
+    } else {
       logger.info("Invalid X-API-KEY");
     }
   })
-  
+
+  app.use(express.static('public'));
+
+  // Check whether need to do data migration
+  app.use((req, res, next)=>{
+    checkMigration(req, res, next);
+  });
+
+  checkMigration();
+
   createRouters(app)
 
   app.use(errorLogger());
