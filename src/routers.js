@@ -39,7 +39,7 @@ function createHealthRouter(){
 }
 
 function createRouters(app){
-  app.use('/api', createAPIRouters());
+  app.use('/apis', createAPIRouters());
   app.use('/', createHealthRouter());
 }
 
