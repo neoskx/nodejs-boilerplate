@@ -2,7 +2,8 @@ const MongoClient = require('mongodb').MongoClient;
 const _ = require('lodash');
 const config = require('../config');
 const logger = require('./logger');
-const {HTTPError} = require('./Error');
+const {HTTPError} = require('./error');
+const {COLLECTIONS_NAME} = require('./constants');
 
 // private variables, to store reference, shouldn't be directed access
 let _mongoDBURL;
@@ -225,6 +226,17 @@ async function logUnknownDataToDB(doc) {
     }
 }
 
+async function getServerInfo(){
+    try{
+        let serverInfo = await find(COLLECTIONS_NAME.serverInfo, {});
+        serverInfo = serverInfo && serverInfo[0];
+        return serverInfo;
+    }catch(err){
+        logger.error('[db->getServerInfo], error: ', err);
+        throw new HTTPError(500, {}, undefined, err);
+    }
+}
+
 module.exports = {
     DB,
     find,
@@ -236,5 +248,6 @@ module.exports = {
     findOneById,
     updateOneById,
     updateOneByGlobalId,
-    logUnknownDataToDB
+    logUnknownDataToDB,
+    getServerInfo
 }

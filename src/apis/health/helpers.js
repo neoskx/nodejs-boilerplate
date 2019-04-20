@@ -1,11 +1,12 @@
-const packageJson = require('../../../package.json');
+// const packageJson = require('../../../package.json');
+const {
+    getServerInfo
+} = require('../../util/db');
 
 async function healthStatus() {
-    return {
-        name: packageJson.name,
-        description: packageJson.description,
-        version: packageJson.version
-    }
+    let serverInfo = await getServerInfo();
+    delete serverInfo._id;
+    return serverInfo;
 }
 
 module.exports = {
