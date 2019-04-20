@@ -7,6 +7,7 @@ const packageJson = require('../package.json');
 
 // routers
 const apikey = require('./apis/apikey');
+const health = require('./apis/health');
 
 function createAPIRouters(){
   const router = express.Router();
@@ -35,6 +36,7 @@ function createHealthRouter(){
     res.send(`Welcome to ${packageJson.name}!`);
   });
 
+  health.router(router);
   return router;
 }
 

@@ -1,13 +1,15 @@
 const _ = require('lodash');
+const uuidv4 = require("uuid/v4");
 const packageJSON = require('../../package.json');
 const {
-    find,
+    getServerInfo,
     insertOne,
     updateOne
 } = require('../util/db');
 const {
     COLLECTIONS_NAME
 } = require('../util/constants');
+const config = require('../config');
 const logger = require('../util/logger');
 const ServerInformation = require('../data_models/ServerInformation');
 const migration1 = require('./migration1');
@@ -32,6 +34,8 @@ async function migration() {
         }
         logger.info("Working on ...");
         let nextMigrationVersion = _server_info.migrationVersion + 1;
+        let serverInfo = await getServerInfo();
+        let info = new ServerInformation();
         switch (nextMigrationVersion) {
             case 1:
                 // a migration job is running
@@ -43,9 +47,6 @@ async function migration() {
                 await migration1.migrateTask();
 
                 logger.info(`[[[Start update Server Information`);
-                let serverInfo = await find(COLLECTIONS_NAME.serverInfo, {});
-                serverInfo = serverInfo && serverInfo[0];
-                let info = new ServerInformation();
                 info.deserialize(serverInfo);
                 info.migrationVersion = 1;
                 _server_info = info;
@@ -80,8 +81,7 @@ async function checkMigration(req, res, next) {
         // didn't cache, need to get system information from server
         if (!_server_info) {
             // Get all server inform
-            let serverInfo = await find(COLLECTIONS_NAME.serverInfo, {});
-            _server_info = serverInfo && serverInfo[0];
+            _server_info = await getServerInfo();
             // if doesn't exist, then init server information
             if (!_server_info) {
                 logger.debug(`[checkMigration] *_server_info* doesn't exist in DB, init a serverInfo and insert to DB, collection name: ${COLLECTIONS_NAME.serverInfo}.`);
@@ -90,6 +90,7 @@ async function checkMigration(req, res, next) {
                 info.description = packageJSON.description;
                 info.version = packageJSON.version;
                 info.migrationVersion = 0;
+                info.globalId = config.GLOBAL_ID || uuidv4();
                 _server_info = info;
                 await insertOne(COLLECTIONS_NAME.serverInfo, info.serialize());
             } else {
@@ -124,6 +125,7 @@ async function checkMigration(req, res, next) {
             next(err);
         } else {
             logger.info("checkMigration wasn't triggered by RESTFul API");
+            logger.error(err);
         }
     }
 }

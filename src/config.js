@@ -2,6 +2,7 @@
 const constants = require('./util/constants');
 // Env vars should be casted to correct types
 const config = {
+  GLOBAL_ID: process.env.GLOBAL_ID,
   PORT: Number(process.env.PORT) || constants.CONFIG.PORT,
   SERVICE_NAME: process.env.SERVICE_NAME || constants.CONFIG.SERVICE_NAME,
   NODE_ENV: process.env.NODE_ENV || constants.CONFIG.NODE_ENV,
