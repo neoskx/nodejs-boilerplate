@@ -2,11 +2,12 @@
  * Created by Shaoke Xu on 5/5/18.
  */
 const express = require('express');
-const logger = require('./util/logger')(__filename);
+const logger = require('./util/logger');
 const packageJson = require('../package.json');
 
 // routers
 const apikey = require('./apis/apikey');
+const health = require('./apis/health');
 
 function createAPIRouters(){
   const router = express.Router();
@@ -35,11 +36,12 @@ function createHealthRouter(){
     res.send(`Welcome to ${packageJson.name}!`);
   });
 
+  health.router(router);
   return router;
 }
 
 function createRouters(app){
-  app.use('/api', createAPIRouters());
+  app.use('/apis', createAPIRouters());
   app.use('/', createHealthRouter());
 }
 

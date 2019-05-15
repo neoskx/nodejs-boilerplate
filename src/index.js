@@ -1,9 +1,10 @@
 /**
  * Created by Shaoke Xu on 4/29/18.
  */
+require('./util/extendNativeJavaScript');
 const enableDestroy = require('server-destroy');
 
-const logger = require('./util/logger')(__filename);
+const logger = require('./util/logger');
 const config = require('./config');
 const createApp = require('./app');
 

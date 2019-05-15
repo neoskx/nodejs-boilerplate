@@ -12,21 +12,13 @@
       "description": "API Key for restful api validation",
       "value": "5b0e37dd-2bc8-42b4-8e18-d9b8faf19c99"
     },
-    "MONGODB_URL": {
-      "description": "Mongodb URL",
-      "value": "ds129045.mlab.com:29045"
+    "GLOBAL_ID": {
+      "description": "Global ID for this server, global id must be unique. If you didn't pass, then it will generate for you",
+      "value": "ec267ae3-0a9e-427c-903b-f6790689bcc9"
     },
-    "MONGODB_NAME": {
-      "description": "MongoDB Name",
-      "value": "nodejs-boilerplate"
-    },
-    "MONGODB_USERNAME": {
-      "description": "MongoDB User Name",
-      "value": "admin"
-    },
-    "MONGODB_PASSWORD": {
-      "description": "MongoDB User's Password",
-      "value": "123456789"
+    "MONGODB_URI": {
+      "description": "Mongodb URI",
+      "value": "mongodb://localhost:27017/dia"
     }
   },
   "success_url": "/",

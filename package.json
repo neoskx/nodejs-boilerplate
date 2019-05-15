@@ -2,36 +2,41 @@
   "name": "nodejs-boilerplate",
   "version": "0.0.1",
   "description": "A nodejs boilerplate help myself to create a nodejs service faster. ",
+  "migrationVersion": "1",
   "main": "./src/app.js",
   "engines": {
     "node": "8.x.x"
   },
   "dependencies": {
-    "body-parser": "^1.18.2",
-    "compression": "^1.7.1",
-    "express": "^4.16.3",
+    "body-parser": "^1.18.3",
+    "compression": "^1.7.4",
+    "express": "^4.16.4",
     "express-validator": "^5.3.1",
-    "lodash": "^4.17.10",
-    "mongodb": "^3.1.13",
-    "morgan": "^1.9.0",
+    "fs-extra": "^7.0.1",
+    "lodash": "^4.17.11",
+    "mongodb": "^3.2.2",
+    "morgan": "^1.9.1",
     "server-destroy": "^1.0.1",
     "uuid": "^3.3.2",
     "validator": "^10.11.0",
-    "winston": "^2.3.1"
+    "winston": "^3.2.1"
   },
   "devDependencies": {
-    "chai": "^4.1.2",
-    "eslint": "^4.8.0",
-    "eslint-config-airbnb-base": "^12.0.2",
-    "eslint-plugin-import": "^2.7.0",
-    "mocha": "^4.0.1",
-    "nodemon": "^1.12.1",
-    "supertest": "^3.0.0",
-    "ndb": "^1.0.42"
+    "chai": "^4.2.0",
+    "eslint": "^5.16.0",
+    "eslint-config-airbnb-base": "^13.1.0",
+    "eslint-plugin-import": "^2.16.0",
+    "mocha": "^6.0.2",
+    "ndb": "^1.0.44",
+    "nodemon": "^1.18.10",
+    "npm-check-updates": "^3.1.4",
+    "supertest": "^4.0.2"
   },
   "scripts": {
     "start": "nodemon --watch ./src -e js src/index.js",
-    "debug": "ndb src/index.js"
+    "debug": "ndb src/index.js",
+    "check-dependencies": "ncu",
+    "update-dependencies": "ncu -u"
   },
   "author": "neofk1987@gmail.com",
   "license": "Apache License 2.0"

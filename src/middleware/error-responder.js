@@ -1,52 +1,23 @@
-const http = require('http');
 const _ = require('lodash');
+const uitls = require('../util/utils');
+const config = require('../config');
 
 // This reponder is assuming that all <500 errors are safe to be responded
 // with their .message attribute.
 // DO NOT write sensitive data into error messages.
 function createErrorResponder(_opts) {
-  const opts = _.merge({
-    isErrorSafeToRespond: status => status < 500,
-  }, _opts);
-
   // 4 params needed for Express to know it's a error handler middleware
   // eslint-disable-next-line
   return function errorResponder(err, req, res, next) {
-    let message;
-    let status = err.status ? err.status : 500;
-    switch (err.type) {
-      case 'StripeCardError':
-        // A declined card error
-        status = 402;
-        break;
-      case 'StripeInvalidRequestError':
-        status = 402;
-        break;
-      case 'StripeConnectionError':
-        status = 503;
-        break;
-      case 'StripeRateLimitError':
-        status = 429;
-        break;
-      default:
-        break;
+    
+    let statusCode = err.statusCode ? err.statusCode : 500;
+    res.status(statusCode);
+    // if it is production env, then don't return stack information
+    if(config.NODE_ENV.toLowerCase() === 'production'){
+      res.send(uitls.omit(err.serialize(), ['stack'], ['causedBy']));
+    }else{
+      res.send(err.serialize());
     }
-
-    const httpMessage = http.STATUS_CODES[status];
-    if (opts.isErrorSafeToRespond(status)) {
-      // eslint-disable-next-line
-      message = err.message;
-    } else {
-      message = httpMessage;
-    }
-
-    const isPrettyValidationErr = _.has(err, 'errors');
-    const body = isPrettyValidationErr
-      ? JSON.stringify(err)
-      : { status, statusText: httpMessage, messages: [message] };
-
-    res.status(status);
-    res.send(body);
   };
 }
 

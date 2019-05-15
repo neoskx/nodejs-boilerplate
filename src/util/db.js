@@ -1,148 +1,253 @@
 const MongoClient = require('mongodb').MongoClient;
 const _ = require('lodash');
 const config = require('../config');
+const logger = require('./logger');
+const {HTTPError} = require('./error');
+const {COLLECTIONS_NAME} = require('./constants');
 
 // private variables, to store reference, shouldn't be directed access
 let _mongoDBURL;
 let _db;
-let _client;
 
-if (!config.MONGODB_USERNAME || !config.MONGODB_PASSWORD) {
-    _mongoDBURL = `mongodb://${config.MONGODB_URL}`;
+if (config.MONGODB_URI) {
+    // TODO validate **MONGODB_URI**
+    _mongoDBURL = config.MONGODB_URI;
+} else if (config.MONGODB_URL && config.MONGODB_NAME) {
+    if (!config.MONGODB_USERNAME || !config.MONGODB_PASSWORD) {
+        _mongoDBURL = `mongodb://${config.MONGODB_URL}/${config.MONGODB_NAME}`;
+    } else {
+        _mongoDBURL = `mongodb://${config.MONGODB_USERNAME}:${config.MONGODB_PASSWORD}@${config.MONGODB_URL}/${config.MONGODB_NAME}`;
+    }
 } else {
-    _mongoDBURL = `mongodb://${config.MONGODB_USERNAME}:${config.MONGODB_PASSWORD}@${config.MONGODB_URL}`;
+    throw Error(`You MUST set env **MONGODB_URI**, Format: mongodb://<dbUser>:<dbPassword>@<dbHost>:<dbPort>/<dbName>. 
+                    Or set env **MONGODB_USERNAME**, **MONGODB_PASSWORD**, **MONGODB_URL**, **MONGODB_NAME** `);
 }
 
 // TODO: need to think about support multiple database
 async function DB() {
-    if (_db) {
-        return _db;
-    }
-    _client = new MongoClient(_mongoDBURL);
-    return new Promise((resolve, reject) => {
-        _client.connect(function (err) {
-            if (err) {
-                reject(err);
-            } else {
-                _db = _client.db(config.MONGODB_NAME);
-                resolve(_db);
-            }
+    try {
+        if (_db) {
+            return _db;
+        }
+        return new Promise((resolve, reject) => {
+            logger.info(`mongodbURL: ${_mongoDBURL}`);
+            let options = {
+                autoReconnect: true,
+                reconnectTries: Number.MAX_SAFE_INTEGER,
+                reconnectInterval: 500,
+                useNewUrlParser: true
+            };
+            logger.info(`options: `, {
+                options
+            });
+            MongoClient.connect(_mongoDBURL, options, (err, client) => {
+                if (err) {
+                    logger.error('Connect to DB Fail!', err);
+                    reject(err);
+                } else {
+                    _db = client.db();
+                    logger.info('Connect to DB successful!');
+                    resolve(_db);
+                }
+            });
         });
-    });
+    } catch (err) {
+        logger.error('[db->DB], error: ', err);
+        throw err;
+    }
 }
 
 async function find(collectionName, query, options) {
-    let db = await DB();
-    const collection = db.collection(collectionName);
-    let result = await collection.find(query, options||{});
-    result = result.toArray();
-    return result;
+    try {
+        let db = await DB();
+        const collection = db.collection(collectionName);
+        let result = await collection.find(query, options || {});
+        result = result.toArray();
+        return result;
+    } catch (err) {
+        logger.error('[db->find], error: ', err);
+        throw err;
+    }
 }
 
 async function findOne(collectionName, query, options) {
-    let db = await DB();
-    const collection = db.collection(collectionName);
-    const result = await collection.findOne(query, options||{});
-    return result;
+    try {
+        let db = await DB();
+        const collection = db.collection(collectionName);
+        const result = await collection.findOne(query, options || {});
+        return result;
+    } catch (err) {
+        logger.error('[db->findOne], error: ', err);
+        throw err;
+    }
+}
+
+async function findOneByGlobalId(collectionName, gid, options) {
+    try {
+        let db = await DB();
+        const collection = db.collection(collectionName);
+        const result = await collection.findOne({
+            global_id: {
+                $eq: gid
+            }
+        }, options || {});
+        return result;
+    } catch (err) {
+        logger.error('[db->findOneByGlobalId], error: ', err);
+        throw new HTTPError(500, {
+            collectionName,
+            global_id: gid,
+            options
+        }, undefined, err);
+    }
 }
 
 async function updateOne(collectionName, filter, update, options) {
-    let db = await DB();
-    const collection = db.collection(collectionName);
-    const result = await collection.updateOne(filter, update ,options||{});
-    return result;
+    try {
+        let db = await DB();
+        const collection = db.collection(collectionName);
+        const result = await collection.updateOne(filter, update, options || {});
+        return result;
+    } catch (err) {
+        logger.error('[db->updateOne], error: ', err);
+        throw new HTTPError(500, {}, undefined, err);
+    }
 }
 
 async function updateMany(collectionName, filter, update, options) {
-    let db = await DB();
-    const collection = db.collection(collectionName);
-    const result = await collection.updateMany(filter, update ,options||{});
-    return result;
-}
-
-async function insertOne(doc, collectionName) {
-    let db = await DB();
-    let collection = db.collection(collectionName);
-    if(!doc.create_at){
-        doc.create_at = Date.now();
+    try {
+        let db = await DB();
+        const collection = db.collection(collectionName);
+        const result = await collection.updateMany(filter, update, options || {});
+        return result;
+    } catch (err) {
+        logger.error('[db->updateMany], error: ', err);
+        throw new HTTPError(500, {}, undefined, err);
     }
-    let result = await collection.insertOne(doc);
-    return result;
 }
 
-async function findOneById(id, collectionName, options) {
-    let db = await DB();
-    const collection = db.collection(collectionName);
-    const result = await collection.findOne({
-        _id: {
-            $eq: id
+async function insertOne(collectionName, doc) {
+    try {
+        let db = await DB();
+        let collection = db.collection(collectionName);
+        if (!doc.created_at) {
+            doc.created_at = Date.now();
         }
-    }, options||{});
-    return result;
-}
-
-async function findOneByGlobalId(id, collectionName, options) {
-  let db = await DB();
-  const collection = db.collection(collectionName);
-  const result = await collection.findOne({
-    global_id: {
-      $eq: id
+        let result = await collection.insertOne(doc);
+        return result;
+    } catch (err) {
+        logger.error('[db->insertOne], error: ', err);
+        throw new HTTPError(500, {}, undefined, err);
     }
-  }, options||{});
-  return result;
 }
 
-async function checkExistByID(id, collectionName){
-    const result = await findOneById(id, collectionName, {'_id': 1});
+async function findOneById(collectionName, id, options) {
+    try {
+        let db = await DB();
+        const collection = db.collection(collectionName);
+        const result = await collection.findOne({
+            _id: {
+                $eq: id
+            }
+        }, options || {});
+        return result;
+    } catch (err) {
+        logger.error('[db->findOneById], error: ', err);
+        throw new HTTPError(500, {}, undefined, err);
+    }
+}
+
+async function checkExistByID(collectionName, id) {
+    const result = await findOneById(collectionName, id, {
+        '_id': 1
+    });
     return !!result;
 }
 
-async function updateOneById(id, data, collectionName, upsert) {
-    let db = await DB();
-    const collection = db.collection(collectionName);
-    if(!data.modified_at){
-        data.modified_at = Date.now();
-    }
-
-    let result = await collection.updateOne({
-        _id: {
-            $eq: id
+async function updateOneById(collectionName, id, data, upsert) {
+    try {
+        let db = await DB();
+        const collection = db.collection(collectionName);
+        if (!data.modified_at) {
+            data.modified_at = Date.now();
         }
-    }, {
-        $set: data
-    }, {
-        upsert: upsert
-    });
-    return result;
+
+        let result = await collection.updateOne({
+            _id: {
+                $eq: id
+            }
+        }, {
+            $set: data
+        }, {
+            upsert: upsert
+        });
+        return result;
+    } catch (err) {
+        logger.error('[db->updateOneById], error: ', err);
+        throw new HTTPError(500, {}, undefined, err);
+    }
 }
 
-async function updateOneByGlobalId(gid, data, collectionName, upsert) {
-    let db = await DB();
-    const collection = db.collection(collectionName);
-    if(!data.modified_at){
-        data.modified_at = Date.now();
-    }
-
-    let result = await collection.updateOne({
-        global_id: {
-            $eq: gid
+async function updateOneByGlobalId(collectionName, gid, data, upsert) {
+    try {
+        let db = await DB();
+        const collection = db.collection(collectionName);
+        if (!data.modified_at) {
+            data.modified_at = Date.now();
         }
-    }, {
-        $set: data
-    }, {
-        upsert: upsert
-    });
-    return result;
+
+        let result = await collection.updateOne({
+            global_id: {
+                $eq: gid
+            }
+        }, {
+            $set: data
+        }, {
+            upsert: upsert
+        });
+        return result;
+    } catch (err) {
+        logger.error('[db->updateOneByGlobalId], error: ', err);
+        throw new HTTPError(500, {}, undefined, err);
+    }
+}
+
+async function logUnknownDataToDB(doc) {
+    try {
+        if (!doc.global_id) {
+            logger.error(`no global_id, ignore it. `, doc);
+            return false;
+        }
+        let result = await updateOneByGlobalId(doc.global_id, doc, COLLECTIONS_NAME.unknownData, true);
+        return result;
+    } catch (err) {
+        logger.error('[db->logUnknownDataToDB], error: ', err);
+        throw new HTTPError(500, {}, undefined, err);
+    }
+}
+
+async function getServerInfo(){
+    try{
+        let serverInfo = await find(COLLECTIONS_NAME.serverInfo, {});
+        serverInfo = serverInfo && serverInfo[0];
+        return serverInfo;
+    }catch(err){
+        logger.error('[db->getServerInfo], error: ', err);
+        throw new HTTPError(500, {}, undefined, err);
+    }
 }
 
 module.exports = {
     DB,
     find,
     findOne,
+    findOneByGlobalId,
     insertOne,
     updateOne,
     updateMany,
     findOneById,
     updateOneById,
-    updateOneByGlobalId
+    updateOneByGlobalId,
+    logUnknownDataToDB,
+    getServerInfo
 }
